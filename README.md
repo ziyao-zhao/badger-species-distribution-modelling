@@ -1,282 +1,344 @@
-# Spatial Species Distribution Modelling: GLM vs Random Forest
+Spatial Species Distribution Modelling: GLM vs Random Forest
 
-> Predicting European badger (*Meles meles*) habitat suitability while evaluating how spatial autocorrelation affects model performance.
+Comparing Generalised Linear Models and Random Forest for predicting European badger (Meles meles) habitat suitability, with particular attention to multiscale environmental effects and spatially robust model validation.
 
-## Overview
+Project Overview
 
-Species Distribution Models are widely used to investigate relationships between species occurrence and environmental conditions. However, ecological relationships are often scale-dependent, and spatial clustering can cause conventional model validation to overestimate predictive performance.
+Species Distribution Models (SDMs) are widely used to examine relationships between species occurrence and environmental conditions. However, two methodological issues can strongly affect model results:
 
-This project compares a **Generalised Linear Model (GLM)** and a **Random Forest model** for predicting the spatial distribution of the European badger (*Meles meles*).
+environmental variables may influence species at different spatial scales;
 
-The analysis focuses on three questions:
+spatial clustering can cause conventional cross-validation to overestimate predictive performance.
 
-1. At what spatial scales are woodland and urban land cover most strongly associated with badger occurrence?
-2. How do badgers respond to woodland cover, urban land cover, and elevation?
-3. How does model performance change when spatial dependence is considered during validation?
+This project compares a Generalised Linear Model (GLM) and a Random Forest (RF) model for predicting the distribution of European badgers (Meles meles).
 
-## Key Findings
+The analysis addresses three questions:
 
-* Broadleaf woodland showed its strongest relationship with badger occurrence at approximately **900 metres**.
-* Urban land cover showed its strongest relationship at approximately **1,500 metres**.
-* Predicted occurrence probability increased with broadleaf woodland cover.
-* Elevation had a negative relationship with predicted occurrence probability.
-* Random Forest achieved the strongest performance under conventional non-spatial cross-validation.
-* Both models performed worse under spatial cross-validation.
-* Random Forest showed a larger reduction in performance than GLM after controlling for spatial dependence.
-* Ripley’s K analysis identified substantial spatial clustering in the occurrence records.
-* GLM provided more stable spatial generalisation and clearer ecological interpretation, while Random Forest captured more complex and localised patterns.
+At what spatial scales are broadleaf woodland and urban land cover most strongly associated with badger occurrence?
 
-## Why This Project Matters
+How does predicted badger occurrence respond to woodland cover, urban land cover, and elevation?
 
-A model can appear highly accurate when geographically adjacent observations are divided randomly between the training and test sets. Because neighbouring locations often have similar environmental conditions, the model may partly memorise local spatial patterns rather than learn relationships that generalise to new areas.
+How does model performance change when spatial dependence is considered during validation?
 
-This project demonstrates why **spatial cross-validation** is important when evaluating models built from geographically clustered data.
+Main Findings
 
-The same principle applies beyond ecology to:
+Broadleaf woodland showed its strongest relationship with badger occurrence at approximately 900 m.
 
-* urban analytics;
-* retail location modelling;
-* mobility analysis;
-* property price prediction;
-* environmental risk modelling;
-* geospatial machine learning.
+Urban land cover showed its strongest relationship at approximately 1,500 m.
 
-## Data Preparation
+Predicted occurrence probability increased with broadleaf woodland cover.
 
-Before modelling, the species occurrence records were:
+Elevation was negatively associated with predicted occurrence probability.
 
-* filtered to remove missing coordinates;
-* filtered to remove records with high coordinate uncertainty;
-* clipped to the study area;
-* transformed into a projected coordinate reference system;
-* combined with **2,000 randomly generated background points** used as pseudo-absence observations.
+Urban land cover showed a weaker positive relationship with occurrence, with greater uncertainty at higher values.
+
+Random Forest achieved the highest AUC under non-spatial cross-validation.
+
+Both models performed worse under spatial cross-validation.
+
+Random Forest showed a larger decrease in performance than GLM after spatial dependence was controlled.
+
+Ripley’s K analysis indicated strong spatial clustering in the species records.
+
+GLM provided more stable spatial generalisation and clearer ecological interpretation, while Random Forest captured more complex local variation.
+
+Data Preparation
+
+Before modelling, species occurrence records were:
+
+filtered to remove missing coordinates;
+
+filtered to remove records with high coordinate uncertainty;
+
+clipped to the study area;
+
+transformed into a projected coordinate reference system;
+
+combined with 2,000 randomly generated background points used as pseudo-absence observations.
 
 Three environmental predictors were included:
 
-| Predictor          | Description                                                   | Processing                              |
-| ------------------ | ------------------------------------------------------------- | --------------------------------------- |
-| Broadleaf woodland | Proportion of broadleaf woodland surrounding each observation | Tested across multiple buffer distances |
-| Urban land cover   | Combined urban and suburban land-cover classes                | Tested across multiple buffer distances |
-| Elevation          | Elevation extracted from a Digital Elevation Model            | Used at its original spatial resolution |
+Predictor
 
-## Multiscale Feature Engineering
+Description
 
-Environmental effects may operate at different spatial scales. To identify an appropriate characteristic scale, buffers of different radii were created around each sample point.
+Processing
 
-A series of binomial models was fitted for each buffer distance, and model log-likelihood was used to select the scale with the strongest relationship to species occurrence.
+Broadleaf woodland
 
-The selected characteristic scales were:
+Proportion of broadleaf woodland surrounding each sample point
 
-| Environmental variable |        Selected scale |
-| ---------------------- | --------------------: |
-| Broadleaf woodland     |   Approximately 900 m |
-| Urban land cover       | Approximately 1,500 m |
+Tested across multiple buffer distances
 
-This multiscale approach avoids selecting buffer distances arbitrarily and allows the predictors to better represent the spatial scale at which ecological processes operate.
+Urban land cover
 
-## Modelling Approach
+Combined urban and suburban land-cover classes
 
-Two binary classification models were developed within a consistent modelling framework.
+Tested across multiple buffer distances
 
-### Generalised Linear Model
+Elevation
 
-The GLM was implemented as a logistic regression model with a logit link function.
+Elevation extracted from a Digital Elevation Model
 
-Advantages:
+Used at its original raster resolution
 
-* interpretable coefficients;
-* clear response direction;
-* relatively smooth prediction surfaces;
-* suitable for ecological inference.
+Multiscale Feature Engineering
 
-### Random Forest
+Environmental relationships may operate at different spatial scales. To identify suitable characteristic scales, buffers of different radii were created around each sample point.
 
-Random Forest combines predictions from multiple decision trees trained using random subsets of observations and predictors.
+Binomial models were fitted at each buffer distance, and model log-likelihood was used to identify the strongest relationship with badger occurrence.
 
-Advantages:
+Environmental variable
 
-* captures nonlinear relationships;
-* models complex interactions;
-* makes fewer assumptions about response shape;
-* produces flexible local predictions.
+Selected scale
 
-## Model Evaluation
+Broadleaf woodland
 
-Model discrimination was evaluated using the **Area Under the Receiver Operating Characteristic Curve**, or AUC.
+Approximately 900 m
 
-Two validation strategies were compared.
+Urban land cover
 
-### Non-Spatial Cross-Validation
+Approximately 1,500 m
 
-Observations were randomly divided between training and test sets.
+This approach avoids choosing buffer distances arbitrarily and allows each predictor to represent the scale at which the ecological relationship is strongest.
 
-This approach estimates predictive performance when nearby observations may appear in both datasets.
+Modelling Methods
 
-### Spatial Cross-Validation
+Generalised Linear Model
 
-Observations were divided into geographically separated training and test groups.
+The GLM was implemented as a binary logistic regression model with a logit link function.
 
-This provides a more conservative estimate of how well the model may generalise to new locations.
+Its main strengths are:
 
-### Model Performance
+clear interpretation of predictor effects;
 
-Replace the placeholders below with the values exported from the modelling results.
+smooth predicted suitability surfaces;
 
-| Model         | Non-spatial CV AUC | Spatial CV AUC |
-| ------------- | -----------------: | -------------: |
-| GLM           |     `[insert AUC]` | `[insert AUC]` |
-| Random Forest |     `[insert AUC]` | `[insert AUC]` |
+transparent model structure;
 
-Random Forest achieved the highest AUC under non-spatial validation. However, its performance decreased more substantially under spatial cross-validation.
+suitability for ecological inference.
 
-This suggests that part of its apparent advantage may have resulted from spatial dependence between nearby observations rather than stronger generalisation to geographically independent areas.
+Random Forest
 
-## Spatial Point-Pattern Diagnostics
+Random Forest is an ensemble tree-based classifier that combines predictions from multiple decision trees.
 
-Ripley’s K function was used to determine whether the species records followed complete spatial randomness.
+Its main strengths are:
 
-The observed K function exceeded the expected value under complete spatial randomness across a broad range of distances, indicating strong spatial clustering.
+ability to capture nonlinear relationships;
 
-This finding supports the use of spatial cross-validation because randomly divided training and test samples cannot be assumed to be spatially independent.
+ability to model complex interactions;
 
-## Results
+flexibility with heterogeneous spatial patterns;
 
-### Environmental Response Curves
+strong apparent predictive performance.
 
-The response curves showed that:
+Model Evaluation
 
-* predicted badger occurrence increased with broadleaf woodland cover;
-* predicted occurrence decreased as elevation increased;
-* urban land cover had a weaker positive relationship with occurrence;
-* uncertainty increased at the upper end of the urban land-cover gradient.
+Model performance was evaluated using the Area Under the Receiver Operating Characteristic Curve (AUC).
 
-![Partial response curves](figures/response-curves.png)
+Two validation strategies were compared:
 
-### Habitat Suitability Maps
+Non-Spatial Cross-Validation
 
-Both models produced similar broad-scale suitability patterns but differed in spatial texture.
+Samples were randomly divided between training and test sets.
 
-The GLM generated a smoother suitability surface, while Random Forest produced more heterogeneous and patchy predictions.
+Because neighbouring observations may be placed in both sets, this method can overestimate model performance when the data are spatially clustered.
 
-Higher suitability was primarily concentrated in lower-elevation areas and near landscape corridors associated with woodland and human-modified environments.
+Spatial Cross-Validation
 
-![Predicted habitat suitability maps](figures/suitability-maps.png)
+Training and test samples were separated geographically.
 
-### Validation and Spatial Clustering
+This provides a more conservative estimate of how well a model may generalise to new locations.
 
-The comparison between non-spatial and spatial cross-validation demonstrates how conventional validation can overestimate model performance when observations are spatially clustered.
+Results
 
-![AUC comparison and Ripley's K diagnostic](figures/model-evaluation.png)
+1. Model Performance Comparison
 
-## Repository Structure
+Random Forest achieved the highest AUC under non-spatial validation. However, its performance declined more strongly under spatial cross-validation than the GLM.
 
-```text
+Approximate values visible in the evaluation figure are:
+
+Model
+
+Non-spatial AUC
+
+Spatial AUC
+
+GLM
+
+~0.79
+
+~0.75
+
+Random Forest
+
+~0.87
+
+~0.72
+
+These values should be replaced with the exact outputs from the analysis script if available.
+
+
+
+The difference between conventional and spatial validation suggests that part of the Random Forest model’s apparent advantage may result from spatial dependence between nearby observations.
+
+2. Broadleaf Woodland Response
+
+Predicted occurrence probability increased as the proportion of broadleaf woodland increased.
+
+The uncertainty interval widened at higher woodland-cover values, indicating fewer observations or greater variability at the upper end of the predictor range.
+
+
+
+3. Urban Land-Cover Response
+
+Urban land cover showed a weaker positive relationship with predicted badger occurrence.
+
+The uncertainty interval widened considerably at higher urban-cover values, so the strength of this relationship should be interpreted cautiously.
+
+
+
+4. GLM Predicted Suitability
+
+The GLM produced a relatively smooth habitat-suitability surface.
+
+Higher suitability was concentrated mainly in lower-elevation areas and along landscape corridors associated with woodland and human-modified environments.
+
+
+
+5. Random Forest Predicted Suitability
+
+The Random Forest prediction was more heterogeneous and spatially patchy than the GLM output.
+
+This reflects the greater flexibility of tree-based models and their ability to capture complex local variation.
+
+
+
+6. Spatial Clustering Diagnosis
+
+Ripley’s K function was used to test whether the occurrence records followed complete spatial randomness.
+
+The observed K function was substantially above the theoretical expectation across a broad range of distances, indicating strong spatial clustering.
+
+
+
+This result supports the use of spatial cross-validation because nearby observations cannot be assumed to be statistically independent.
+
+Interpretation
+
+The comparison shows that the model with the highest conventional validation score is not necessarily the model that generalises best across space.
+
+Random Forest captured more complex spatial structure and achieved the highest non-spatial AUC. However, its larger decline under spatial cross-validation suggests that it relied more heavily on local spatial dependence.
+
+GLM produced smoother and more interpretable predictions and remained comparatively stable after geographic separation of the training and test data.
+
+For this study:
+
+GLM is more suitable for ecological interpretation and spatially robust inference.
+
+Random Forest remains useful as a complementary predictive model for identifying complex local patterns.
+
+Why This Project Is Relevant Beyond Ecology
+
+The methodological lessons are also applicable to:
+
+urban analytics;
+
+retail site selection;
+
+mobility and transport analysis;
+
+property-price prediction;
+
+environmental risk modelling;
+
+geographically targeted marketing;
+
+other forms of spatial machine learning.
+
+In each of these settings, random train-test splitting can produce overly optimistic results when nearby observations share similar characteristics.
+
+Tools and Skills Demonstrated
+
+R
+
+GIS and raster data processing
+
+Spatial data cleaning
+
+Pseudo-absence generation
+
+Multiscale buffer analysis
+
+Feature engineering
+
+Generalised Linear Models
+
+Random Forest
+
+Non-spatial cross-validation
+
+Spatial cross-validation
+
+ROC-AUC evaluation
+
+Ripley’s K point-pattern analysis
+
+Spatial prediction and visualisation
+
+Model interpretation
+
+Suggested Repository Structure
+
 badger-species-distribution-modelling/
 │
 ├── README.md
-├── scripts/
-│   ├── 01_data_preparation.R
-│   ├── 02_scale_selection.R
-│   ├── 03_model_training.R
-│   ├── 04_model_validation.R
-│   └── 05_visualisation.R
-│
-├── data/
-│   └── README.md
-│
-├── figures/
-│   ├── response-curves.png
-│   ├── suitability-maps.png
-│   └── model-evaluation.png
-│
-├── results/
-│   └── model-performance.csv
+├── analysis.R
+├── AUCcomparison.png
+├── broadleaf-response.png
+├── GLM-predicted.png
+├── Kcsr.png
+├── RF-predited.png
+├── urban_resonse.png
 │
 ├── report/
 │   └── project-report.pdf
 │
-└── sessionInfo.txt
-```
+└── data/
+    └── README.md
 
-## Tools and Methods
+Data Availability
 
-* R
-* GIS and raster data processing
-* Generalised Linear Models
-* Random Forest
-* Multiscale buffer analysis
-* Pseudo-absence generation
-* Non-spatial cross-validation
-* Spatial cross-validation
-* ROC-AUC evaluation
-* Ripley’s K point-pattern analysis
-* Spatial prediction and visualisation
+Raw data are not included where redistribution is restricted by licensing, file size, or species-location sensitivity.
 
-## Running the Project
+The project uses:
 
-1. Clone the repository:
+badger occurrence records;
 
-```bash
-git clone https://github.com/YOUR-USERNAME/badger-species-distribution-modelling.git
-cd badger-species-distribution-modelling
-```
+land-cover data;
 
-2. Open the project in RStudio.
+a Digital Elevation Model;
 
-3. Place the required datasets in the `data/` directory according to the instructions in `data/README.md`.
+generated background points.
 
-4. Run the scripts in numerical order:
+The data/README.md file should document the original data providers, file formats, coordinate reference systems, and preprocessing steps.
 
-```text
-01_data_preparation.R
-02_scale_selection.R
-03_model_training.R
-04_model_validation.R
-05_visualisation.R
-```
+Limitations
 
-5. Model outputs will be saved in `results/`, while maps and charts will be saved in `figures/`.
+Background points were used instead of confirmed absence records.
 
-## Data Availability
+Only three environmental predictors were included.
 
-The repository does not include raw datasets that are restricted by licensing, file size, or species-location sensitivity.
+The occurrence records showed substantial spatial clustering.
 
-The `data/README.md` file should document:
+Additional habitat, climate, soil, or landscape-connectivity variables could improve ecological realism.
 
-* dataset names;
-* original providers;
-* download links;
-* coordinate reference systems;
-* required file formats;
-* preprocessing instructions.
+The selected spatial scales may be specific to the study area and available datasets.
 
-## Limitations
+Conclusion
 
-This analysis has several limitations:
+Random Forest produced the strongest apparent predictive performance under conventional validation, but its performance declined substantially when evaluated using geographically separated test data.
 
-* background points were used instead of confirmed species absences;
-* only three environmental predictors were included;
-* spatial clustering remained present in the occurrence records;
-* additional habitat, climate, soil, and landscape-connectivity variables could improve ecological realism;
-* the selected spatial scales may be specific to the study area and available data.
+GLM produced smoother, more interpretable predictions and remained more stable under spatial cross-validation.
 
-## Skills Demonstrated
-
-This project demonstrates the ability to:
-
-* clean and integrate spatial datasets;
-* construct predictors from vector and raster data;
-* perform multiscale spatial feature engineering;
-* compare statistical and machine-learning models;
-* identify potential spatial data leakage;
-* design geographically appropriate validation strategies;
-* interpret model response curves;
-* communicate spatial modelling results through maps and visualisations.
-
-## Conclusion
-
-Random Forest produced the strongest apparent predictive performance under conventional validation and captured more complex spatial variation. However, its performance declined substantially when evaluated using spatially separated test data.
-
-GLM produced smoother and more interpretable predictions and remained comparatively stable under spatial cross-validation.
-
-The results show that model selection should not be based only on conventional accuracy metrics. For spatial datasets, the structure of the validation process can be just as important as the choice of algorithm.
+The project demonstrates that for spatial datasets, model validation design can be just as important as model choice.
